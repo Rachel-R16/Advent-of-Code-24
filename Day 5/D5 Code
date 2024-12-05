@@ -1,0 +1,82 @@
+# Initialize the rules dictionary and pages list
+rules = {}
+pages = []
+split = False  # Indicates whether the input has switched from rules to pages
+
+
+# Function to update a dictionary with a key-value pair
+def update_dict(my_dict, key, value):
+    # Check if the key already exists in the dictionary
+    if key in my_dict:
+        # Convert value to a list if it isn't already one
+        if not isinstance(my_dict[key], list):
+            my_dict[key] = [my_dict[key]]
+        # Append the new value to the list
+        my_dict[key].append(value)
+    else:
+        # Add the key-value pair to the dictionary
+        my_dict[key] = value
+
+
+# Function to fix the ordering of a report based on rules
+def fix_report(report):
+    for i in range(len(report)):
+        curr = report[i]  # Current element being checked
+        for j in range(i):  # Check all elements before the current one
+            # If a previous element is in the current element's rules
+            if report[j] in rules.get(curr):
+                # Remove the out-of-order element and reinsert it after its dependency
+                elem = report.pop(j)
+                report.insert(j + 1, elem)
+
+    # Recheck the report after each adjustment to ensure all rules are satisfied
+    for i in range(len(page)):
+        curr = page[i]
+        for j in range(i):
+            if page[j] in rules.get(curr):
+                fix_report(report)  # Recursively fix the report
+    return report
+
+
+# Read the input file and populate rules and pages
+with open('D5 Input', 'r') as file:
+    for line in file:
+        if line == '\n':  # An empty line separates rules from pages
+            split = True
+        elif not split:
+            # Parse rules in the format "x|y"
+            x, y = line.strip().split('|')
+            update_dict(rules, int(x), int(y))  # Add rule to the dictionary
+        else:
+            # Parse pages as lists of integers
+            values = [int(value) for value in line.strip().split(',')]
+            pages.append(values)
+
+# Lists to store middle elements of correct and fixed reports
+correct_mid = []
+incorrect_mid = []
+
+# Process each page to determine if it is correctly ordered
+for page in pages:
+    fail = False  # Flag to indicate if the page violates any rules
+    for i in range(len(page)):
+        curr = page[i]  # Current element being checked
+        for j in range(i):  # Check all elements before the current one
+            # If a previous element violates the rules
+            if page[j] in rules.get(curr):
+                fail = True
+                break
+    if not fail:
+        # If the page is correct, append the middle element to `correct_mid`
+        correct_mid.append(page[len(page) // 2])
+    else:
+        # If the page is incorrect, fix it and append the middle element to `incorrect_mid`
+        new_page = fix_report(page)
+        incorrect_mid.append(new_page[len(new_page) // 2])
+
+# Calculate the sum of middle elements for correct and fixed pages
+correct_sum = sum(correct_mid)
+print("Part 1 - Sum of correctly ordered:", correct_sum)
+
+incorrect_sum = sum(incorrect_mid)
+print("Part 2 - Sum of incorrectly ordered:", incorrect_sum)
