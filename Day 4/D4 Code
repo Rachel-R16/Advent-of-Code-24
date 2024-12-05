@@ -1,0 +1,81 @@
+# Initialize the word to search for and an empty grid list
+word = 'XMAS'
+grid = []
+
+# Read the input file and populate the grid, removing any extra whitespace
+with open('D4 Input', 'r') as file:
+    for line in file:
+        grid.append(line.strip())  # Strip any trailing or leading whitespace from each line
+
+# Get the number of rows and columns in the grid, and the length of the word
+rows = len(grid)
+cols = len(grid[0])
+word_len = len(word)
+count = 0  # Initialize the counter for Part 1
+
+# Directions: Vertical, Horizontal, and Diagonal (8 possible directions)
+directions = [
+    (-1, 0), (1, 0),  # Vertical: up, down
+    (0, -1), (0, 1),  # Horizontal: left, right
+    (-1, -1), (1, 1),  # Diagonal: top-left to bottom-right, bottom-left to top-right
+    (-1, 1), (1, -1)   # Diagonal: top-right to bottom-left, bottom-right to top-left
+]
+
+# Check each position in the grid to see if the word fits in any of the 8 directions
+for r in range(rows):
+    for c in range(cols):
+        for dr, dc in directions:
+            # Check if the word fits in the current direction
+            found = True
+            for i in range(word_len):
+                nr, nc = r + i * dr, c + i * dc  # Calculate new row and column for each character in the word
+                # Check if the new position is out of bounds or the character doesn't match
+                if not (0 <= nr < rows and 0 <= nc < cols) or grid[nr][nc] != word[i]:
+                    found = False
+                    break
+            if found:
+                count += 1  # Increment the count if the word was found in this direction
+
+# Print the result for Part 1
+print("Part 1 - Count of XMAS:", count)
+
+# Define diagonal orientations for Part 2 (searching for X-MAS in a 3x3 space around 'A')
+diagonals = [
+    {
+        'd1': [(-1, -1), (1, 1)],  # Top-left to bottom-right, bottom-left to top-right
+        'd2': [(-1, 1), (1, -1)]   # Top-right to bottom-left, bottom-right to top-left
+    },
+    {
+        'd1': [(-1, -1), (1, 1)],  # Top-left to bottom-right, bottom-left to top-right
+        'd2': [(1, -1), (-1, 1)]   # Bottom-left to top-right, top-right to bottom-left
+    },
+    {
+        'd1': [(1, 1), (-1, -1)],  # Bottom-left to top-right, top-left to bottom-right
+        'd2': [(-1, 1), (1, -1)]   # Top-right to bottom-left, bottom-left to top-right
+    },
+    {
+        'd1': [(1, 1), (-1, -1)],  # Bottom-left to top-right, top-left to bottom-right
+        'd2': [(1, -1), (-1, 1)]   # Bottom-right to top-left, top-left to bottom-right
+    }
+]
+
+# Initialize counter for Part 2
+new_count = 0
+
+# Traverse the grid, avoiding edges to ensure space for 'MAS' in a 3x3 space
+for r in range(1, rows - 1):  # Avoid the first and last rows
+    for c in range(1, cols - 1):  # Avoid the first and last columns
+        if grid[r][c] == 'A':  # Look for the center 'A' in 'XMAS'
+            for orientation in diagonals:
+                # Check the first diagonal (d1) for 'M' and 'S'
+                d1_pos = orientation.get('d1')
+                mx, my, sx, sy = d1_pos[0][0], d1_pos[0][1], d1_pos[1][0], d1_pos[1][1]
+                if grid[r + mx][c + my] == 'M' and grid[r + sx][c + sy] == 'S':
+                    # Check the second diagonal (d2) for 'M' and 'S'
+                    d2_pos = orientation.get('d2')
+                    mx, my, sx, sy = d2_pos[0][0], d2_pos[0][1], d2_pos[1][0], d2_pos[1][1]
+                    if grid[r + mx][c + my] == 'M' and grid[r + sx][c + sy] == 'S':
+                        new_count += 1  # Increment count if both diagonals match 'M' and 'S'
+
+# Print the result for Part 2
+print("Part 2 - Count of X-MAS:", new_count)
