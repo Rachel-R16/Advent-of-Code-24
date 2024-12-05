@@ -1,0 +1,62 @@
+import re  # Importing the regular expressions module for pattern matching
+
+# Initialize lists to store values and filtered values
+vals = []  # Stores all matched multiplication pairs
+filter_vals = []  # Stores filtered multiplication pairs based on 'do'/'don't' conditions
+
+# Define regex patterns for extracting and processing the input
+mul_pattern = r"mul\((\d+),(\d+)\)"  # Pattern to match multiplication operations like mul(3,4)
+dont_pattern = r"don't\(\)"  # Pattern to match "don't()" command
+do_pattern = r"do\(\)"  # Pattern to match "do()" command
+
+# Initialize variables to store sums for Part 1 and Part 2
+sum, sum_filter = 0, 0
+do = True  # A flag to determine whether to process values based on 'do'/'don't' commands
+
+# Read and process the input file
+with open('D3 Input', 'r') as file:
+    for line in file:
+
+        # Part 1: Extract all multiplication operations
+        matches = re.findall(mul_pattern, line)  # Find all matches for mul(x, y)
+        for match in matches:
+            vals.append((int(match[0]), int(match[1])))  # Add the extracted numbers as a tuple to `vals`
+
+        # Part 2: Process line with 'do'/'don't' logic
+        index = 0  # Start at the beginning of the line
+        while index < len(line):
+            # Check for "don't()" pattern and set the `do` flag to False
+            if re.match(dont_pattern, line[index:]):
+                do = False
+                index += len("don't()")  # Skip past "don't()" in the line
+
+            # Check for "do()" pattern and set the `do` flag to True
+            elif re.match(do_pattern, line[index:]):
+                do = True
+                index += len("do()")  # Skip past "do()" in the line
+
+            # Check for "mul(x, y)" pattern and process if `do` is True
+            match = re.match(mul_pattern, line[index:])
+            if match and do:
+                # Extract the numbers from the match and add to filtered values
+                number1, number2 = int(match[1]), int(match[2])
+                filter_vals.append((number1, number2))
+                index += match.end()  # Move index to the end of the match
+            else:
+                index += 1  # Move to the next character if no match
+
+# Part 1: Calculate the total sum of products in `vals`
+for num_set in vals:
+    mul_val = num_set[0] * num_set[1]  # Multiply the two numbers in the tuple
+    sum += mul_val  # Add the product to the total sum
+
+# Print the result for Part 1
+print("Part 1 - Sum: ", sum)
+
+# Part 2: Calculate the total sum of products in `filter_vals`
+for num_set in filter_vals:
+    mul_val = num_set[0] * num_set[1]  # Multiply the two numbers in the tuple
+    sum_filter += mul_val  # Add the product to the total filtered sum
+
+# Print the result for Part 2
+print("Part 2 - Sum: ", sum_filter)
