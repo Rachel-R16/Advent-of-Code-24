@@ -1,0 +1,48 @@
+# Initialize a list to store the reports and counters for safe and fixed reports
+reports = []
+safe = 0  # Counter for valid (safe) reports
+fixed = 0  # Counter for reports that can be fixed by removing one element
+
+# Function to check if a report is valid
+def is_valid_report(report):
+    # Check if the list is strictly increasing
+    is_increasing = all(report[i] < report[i + 1] for i in range(len(report) - 1))
+    # Check if the list is strictly decreasing
+    is_decreasing = all(report[i] > report[i + 1] for i in range(len(report) - 1))
+    # Check if all adjacent differences are within the range {1, 2, 3}
+    valid_differences = all(abs(report[i] - report[i + 1]) in {1, 2, 3} for i in range(len(report) - 1))
+    # A valid report must be either increasing or decreasing and satisfy the difference condition
+    return (is_increasing or is_decreasing) and valid_differences
+
+# Read and process the input file
+with open('D2 Input', 'r') as file:
+    for line in file:
+        # Convert each line of space-separated numbers into a list of integers and add to reports
+        lst = list(map(int, line.strip().split()))
+        reports.append(lst)
+
+# Evaluate each report for validity and attempt to fix invalid ones
+for report in reports:
+    # Check if the report is valid as-is
+    if is_valid_report(report):
+        safe += 1  # Increment the safe counter
+        continue  # Skip to the next report
+
+    # Attempt to fix the report by removing one element at a time
+    fixed_report = False  # Flag to indicate if a fix was successful
+    for i in range(len(report)):
+        # Create a modified report by removing the i-th element
+        modified_report = report[:i] + report[i + 1:]
+
+        # Check if the modified report is valid
+        if is_valid_report(modified_report):
+            fixed_report = True  # Mark as fixed
+            break  # Stop further checks since only one fix is allowed
+
+    # If the report was successfully fixed, increment the fixed counter
+    if fixed_report:
+        fixed += 1
+
+# Print the results
+print("Part 1 - Safe:", safe)  # Number of valid (safe) reports
+print("Part 2 - Fixed + Safe:", fixed + safe)  # Total valid reports (safe + fixed)
