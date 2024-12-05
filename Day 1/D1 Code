@@ -1,0 +1,40 @@
+from collections import Counter
+
+# Initialize two empty lists to store the left and right integers from the input file
+left_list = []
+right_list = []
+
+# Open and read the file 'D1 Input', processing each line
+with open('D1 Input', 'r') as file:
+    for line in file:
+        # Split each line into two integers, convert to int, and add to respective lists
+        left, right = line.strip().split()
+        left_list.append(int(left))
+        right_list.append(int(right))
+
+# Sort both lists in ascending order
+left_list.sort()
+right_list.sort()
+
+# Initialize a variable to store the sum of absolute differences
+sum_of_differences = 0
+
+# Calculate the absolute differences between paired elements from both sorted lists
+for left, right in zip(left_list, right_list):
+    difference = abs(left - right)  # Compute the absolute difference
+    sum_of_differences += difference  # Add the difference to the total sum
+
+# Print the result for Part 1
+print("Part 1 - Sum of Differences:", sum_of_differences)
+
+# Create a frequency counter for elements in the right list
+right_frequencies = Counter(right_list)
+
+# Compute the frequency-weighted sum for elements in the left list
+left_frequencies = [element * right_frequencies[element] for element in left_list]
+
+# Calculate the total frequency sum
+frequency_sum = sum(left_frequencies)
+
+# Print the result for Part 2
+print("Part 2 - Frequency Sum:", frequency_sum)
