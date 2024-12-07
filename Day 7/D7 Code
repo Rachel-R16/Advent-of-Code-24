@@ -1,0 +1,63 @@
+vals = {}
+
+
+def check_combinations(nums, target, index=0, current_value=None):
+    # Base case: if we've reached the end of the list
+    if index == len(nums):
+        return current_value == target
+
+    # If it's the first element, initialize current_value
+    if current_value is None:
+        return check_combinations(nums, target, index + 1, nums[index])
+
+    # Recursive cases: try addition and multiplication
+    return (
+        check_combinations(nums, target, index + 1, current_value + nums[index]) or
+        check_combinations(nums, target, index + 1, current_value * nums[index])
+    )
+
+def concatenate(a, b):
+    """Performs concatenation (||) between two numbers."""
+    return int(str(a) + str(b))
+
+
+def can_form_target(nums, target, index=0, current_value=None):
+    """
+    Check if any combination of +, *, || applied left-to-right
+    can form the target value.
+    """
+    # Base case: if we've processed all numbers
+    if index == len(nums):
+        return current_value == target
+
+    # Initialize current_value for the first number
+    if current_value is None:
+        return can_form_target(nums, target, index + 1, nums[index])
+
+    # Try all operators (+, *, ||)
+    return (
+            can_form_target(nums, target, index + 1, current_value + nums[index]) or
+            can_form_target(nums, target, index + 1, current_value * nums[index]) or
+            can_form_target(nums, target, index + 1, concatenate(current_value, nums[index]))
+    )
+
+
+with open('D7 Input', 'r') as file:
+    for line in file:
+        report = line.split(':')
+        lst = [int(x) for x in report[1].strip().split(' ')]  # Convert values to integers
+        vals[int(report[0])] = lst
+
+
+first_sum = 0
+second_sum = 0
+for final, values in vals.items():
+    if check_combinations(values, final):
+        first_sum += final
+    if can_form_target(values, final):
+        second_sum += final
+
+
+
+print(first_sum)
+print(second_sum)
