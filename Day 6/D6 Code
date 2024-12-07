@@ -1,0 +1,92 @@
+# Directions for movement: up, right, down, left
+directions = [(-1, 0), (0, 1), (1, 0), (0, -1)]
+
+# Function to build the grid from the input file
+def build_grid():
+    # Open the input file and initialize starting position
+    with open('D6 Input') as file:
+        curr = (-1, -1)  # Initialize the current position
+        grid = {}  # Dictionary to store grid positions with values
+        for y, row in enumerate(file):
+            row = row.strip()  # Remove newline characters from the row
+            for x, el in enumerate(row):
+                # If the cell is empty (".") set it as a valid position (0)
+                if el == ".":
+                    grid[(y, x)] = 0
+                # If the cell is blocked ("#") set it as an invalid position (-1)
+                elif el == "#":
+                    grid[(y, x)] = -1
+                # If the cell has a special value (e.g., starting point) set it as (1)
+                else:
+                    grid[(y, x)] = 1
+                    curr = (y, x)  # Update the current position to the special point
+    return grid, curr  # Return the grid and the starting position
+
+# Function to move in the given direction
+def move(grid, curr, direction_index):
+    # Calculate new position based on current position and direction
+    new_pos = curr[0] + directions[direction_index][0], curr[1] + directions[direction_index][1]
+    # If the new position is not valid or blocked, return False
+    if new_pos not in grid or grid[new_pos] == -1:
+        return False
+    return new_pos  # Return the valid new position
+
+# Function to calculate the next valid position in a given direction
+def calc_next_pos(grid, curr, direction_index):
+    # Try moving in the given direction
+    new_pos = move(grid, curr, direction_index)
+    # If move is not possible, try the next direction recursively
+    if not new_pos:
+        direction_index = (direction_index + 1) % len(directions)
+        return calc_next_pos(grid, curr, direction_index)  # Recursive call if blocked
+    return new_pos, direction_index  # Return valid new position and the direction index
+
+# Function to count distinct cells visited and track the visited positions
+def count_distinct(grid, curr, direction_index):
+    visit = 1  # Initialize the visit count (the starting position is visited)
+    visited = []  # List to track the visited positions
+    while True:
+        # Calculate the next valid position and direction to move
+        new_pos, direction_index = calc_next_pos(grid, curr, direction_index)
+        if not new_pos:
+            break  # Exit loop if no valid new position is found
+        # If the new position is valid (empty), increment the visit count and mark it as visited
+        if grid[new_pos] == 0:
+            visit += 1
+            visited.append(new_pos)
+            grid[new_pos] = 1  # Mark the position as visited
+        curr = new_pos  # Update the current position
+    return visit, visited  # Return total visited count and list of visited positions
+
+# Function to count loops by tracking visited positions
+def count_loop(grid, curr, visited):
+    loop_count = 0  # Counter for loops
+    for pos in visited:
+        grid[pos] = -1  # Mark the visited positions as blocked to prevent revisiting
+        is_loop = False  # Initialize loop detection flag
+        on_grid = True  # Flag to check if we're still on the grid
+        loop_visited = []  # List to track loop visits
+        index = 0  # Step counter
+        max_steps = len(grid.keys()) + 1  # Max number of steps to detect a loop
+        while on_grid:
+            # Calculate the next position and direction to move
+            new_pos, direction_index = calc_next_pos(grid, curr, 0)
+            index += 1
+            if not new_pos or index > max_steps:
+                on_grid = False  # Stop if no valid position or max steps are exceeded
+                if index > max_steps:
+                    loop_count += 1  # Loop detected if steps exceed the maximum
+            elif grid[new_pos] == 0:
+                loop_visited.append(new_pos)
+                grid[new_pos] = 1  # Mark the new position as visited
+            curr = new_pos  # Update the current position
+        grid[pos] = 0  # Reset the grid position to unvisited after checking for loops
+    return loop_count  # Return the total number of loops detected
+
+# Main execution: Build grid, count distinct cells visited, and detect loops
+grid, curr = build_grid()  # Build the grid and get the starting position
+visited, lst = count_distinct(grid, curr, 0)  # Count distinct cells visited
+print("Part 1 - Distinct cells visited:", visited)  # Output the count of distinct visited cells
+
+loop = count_loop(grid, curr, lst)  # Count the total loops detected
+print("Part 2 - Total loops counted:", loop)  # Output the total number of loops
