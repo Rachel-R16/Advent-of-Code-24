@@ -1,0 +1,72 @@
+rows = []
+antennas = {}
+antinodes = set()
+all_antinodes = set()
+
+def points_in_line(a, b, c, d):
+    dx, dy = abs(c - a), abs(d - b)
+    x_offset = 1 if a < c else -1
+    y_offset = 1 if b < d else -1
+
+    new_x1 = a - x_offset * dx
+    new_x2 = c + x_offset * dx
+    new_y1 = b - y_offset * dy
+    new_y2 = d + y_offset * dy
+
+    point_1, point_2 = (new_x1, new_y1), (new_x2, new_y2)
+    return point_1, point_2
+
+
+def adding_antinodes(a, b, c, d):
+    dx, dy = abs(c - a), abs(d - b)
+    x_offset = 1 if a < c else -1
+    y_offset = 1 if b < d else -1
+
+    new_x1 = a - x_offset * dx
+    new_x2 = c + x_offset * dx
+    new_y1 = b - y_offset * dy
+    new_y2 = d + y_offset * dy
+
+    # Add all antinodes in one direction
+    while 0 <= new_x1 < len(rows) and 0 <= new_y1 < width:
+        all_antinodes.add((new_x1, new_y1))
+        new_x1 = new_x1 - x_offset * dx
+        new_y1 = new_y1 - y_offset * dy
+
+    # Add all antinodes in the other direction
+    while 0 <= new_x2 < len(rows) and 0 <= new_y2 < width:
+        all_antinodes.add((new_x2, new_y2))
+        new_x2 = new_x2 + x_offset * dx
+        new_y2 = new_y2 + y_offset * dy
+
+
+with open('D8 Input', 'r') as file:
+    for line in file:
+        rows.append(list(line.strip()))
+        width = len(list(line.strip()))
+
+for i in range(len(rows)):
+    row = rows[i]
+    for j in range(len(row)):
+        x = row[j]
+        if x != '.':
+            if x not in antennas.keys():
+                antennas[x] = [(i, j)]
+            else:
+                antennas[x].append((i,j))
+
+for antenna, pos in antennas.items():
+    for i in range(len(pos)):
+        for j in range(i):
+            point_a, point_b = pos[j], pos[i]
+            antinode_a, antinode_b = points_in_line(point_a[0], point_a[1], point_b[0], point_b[1])
+            if 0 <= antinode_a[0] < len(rows) and 0 <= antinode_a[1] < width:
+                antinodes.add(antinode_a)
+            if 0 <= antinode_b[0] < len(rows) and 0 <= antinode_b[1] < width:
+                antinodes.add(antinode_b)
+            adding_antinodes(point_a[0], point_a[1], point_b[0], point_b[1])
+        all_antinodes.add(pos[i])
+
+
+print("Part 1 - Number of distinct antinodes:", len(antinodes))
+print("Part 2 - Number of all antinodes:", len(all_antinodes))
