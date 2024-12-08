@@ -1,23 +1,31 @@
+# Initialize empty structures to store rows, antennas, and antinodes
 rows = []
 antennas = {}
-antinodes = set()
-all_antinodes = set()
+antinodes = set()  # For distinct antinodes
+all_antinodes = set()  # For all antinodes, including duplicates
 
+# Function to compute two points in a straight line connecting (a, b) and (c, d)
 def points_in_line(a, b, c, d):
+    # Calculate the absolute differences in the x and y coordinates
     dx, dy = abs(c - a), abs(d - b)
+    
+    # Determine the direction of movement (right/left for x and up/down for y)
     x_offset = 1 if a < c else -1
     y_offset = 1 if b < d else -1
 
+    # Calculate the new boundary points (one step before the start and after the end)
     new_x1 = a - x_offset * dx
     new_x2 = c + x_offset * dx
     new_y1 = b - y_offset * dy
     new_y2 = d + y_offset * dy
 
+    # Return both calculated points
     point_1, point_2 = (new_x1, new_y1), (new_x2, new_y2)
     return point_1, point_2
 
-
+# Function to add all antinodes between two points (a, b) and (c, d)
 def adding_antinodes(a, b, c, d):
+    # Same logic for calculating direction and boundary points as in points_in_line
     dx, dy = abs(c - a), abs(d - b)
     x_offset = 1 if a < c else -1
     y_offset = 1 if b < d else -1
@@ -27,46 +35,52 @@ def adding_antinodes(a, b, c, d):
     new_y1 = b - y_offset * dy
     new_y2 = d + y_offset * dy
 
-    # Add all antinodes in one direction
+    # Add all antinodes in the first direction, while staying within bounds
     while 0 <= new_x1 < len(rows) and 0 <= new_y1 < width:
-        all_antinodes.add((new_x1, new_y1))
-        new_x1 = new_x1 - x_offset * dx
-        new_y1 = new_y1 - y_offset * dy
+        all_antinodes.add((new_x1, new_y1))  # Add the point to the all_antinodes set
+        new_x1 = new_x1 - x_offset * dx  # Move in the x-direction
+        new_y1 = new_y1 - y_offset * dy  # Move in the y-direction
 
-    # Add all antinodes in the other direction
+    # Add all antinodes in the second direction, while staying within bounds
     while 0 <= new_x2 < len(rows) and 0 <= new_y2 < width:
-        all_antinodes.add((new_x2, new_y2))
-        new_x2 = new_x2 + x_offset * dx
-        new_y2 = new_y2 + y_offset * dy
+        all_antinodes.add((new_x2, new_y2))  # Add the point to the all_antinodes set
+        new_x2 = new_x2 + x_offset * dx  # Move in the x-direction
+        new_y2 = new_y2 + y_offset * dy  # Move in the y-direction
 
-
+# Read the input file line by line and store the rows as a list of characters
 with open('D8 Input', 'r') as file:
     for line in file:
-        rows.append(list(line.strip()))
-        width = len(list(line.strip()))
+        rows.append(list(line.strip()))  # Add each line as a list of characters
+        width = len(list(line.strip()))  # Set the width of the grid based on the line length
 
+# Loop through each row and each character in the row
 for i in range(len(rows)):
     row = rows[i]
     for j in range(len(row)):
         x = row[j]
-        if x != '.':
-            if x not in antennas.keys():
+        if x != '.':  # Process only non-empty points (i.e., antennas)
+            if x not in antennas.keys():  # If antenna type not in dictionary, add it
                 antennas[x] = [(i, j)]
-            else:
-                antennas[x].append((i,j))
+            else:  # If antenna type already exists, append the new position
+                antennas[x].append((i, j))
 
+# For each antenna and its positions, compute the lines and antinodes
 for antenna, pos in antennas.items():
     for i in range(len(pos)):
         for j in range(i):
-            point_a, point_b = pos[j], pos[i]
+            point_a, point_b = pos[j], pos[i]  # Pair of antenna positions
+            # Get the two boundary points in the line between point_a and point_b
             antinode_a, antinode_b = points_in_line(point_a[0], point_a[1], point_b[0], point_b[1])
+            # Ensure the points are within bounds and add them to the distinct antinodes set
             if 0 <= antinode_a[0] < len(rows) and 0 <= antinode_a[1] < width:
                 antinodes.add(antinode_a)
             if 0 <= antinode_b[0] < len(rows) and 0 <= antinode_b[1] < width:
                 antinodes.add(antinode_b)
+            # Add all antinodes between point_a and point_b to the all_antinodes set
             adding_antinodes(point_a[0], point_a[1], point_b[0], point_b[1])
+        # Add the current antenna position to the all_antinodes set
         all_antinodes.add(pos[i])
 
-
-print("Part 1 - Number of distinct antinodes:", len(antinodes))
-print("Part 2 - Number of all antinodes:", len(all_antinodes))
+# Print the results for both parts
+print("Part 1 - Number of distinct antinodes:", len(antinodes))  # Count of unique antinodes
+print("Part 2 - Number of all antinodes:", len(all_antinodes))  # Count of all antinodes (including duplicates)
