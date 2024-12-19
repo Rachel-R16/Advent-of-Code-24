@@ -31,12 +31,12 @@ A third operator (`||`) is introduced, which concatenates two numbers as strings
 
 ### Part 1 Output:
 ```
-1582598718861
+Part 1 - Sum of valid equations with two operators: 1582598718861
 ```
 
 ### Part 2 Output:
 ```
-165278151522644
+Part 2 - Sum of valid equations with three operators: 165278151522644
 ```
 
 ## Conclusion
