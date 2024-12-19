@@ -1,0 +1,34 @@
+from functools import cache
+
+
+@cache
+def count_blinks(stone, num_blinks):
+    # Recursively calculate the number of stones after a given number of blinks.
+    # If the stone is an even length, split it into two parts and recursively calculate the result for each part.
+    # If the stone length is odd, multiply it by 2024 and continue the recursion.
+    if num_blinks == 0:
+        return 1  # Base case: No more blinks, return 1 stone
+
+    # Convert stone to string for length manipulation
+    stone_str = str(stone)
+    stone_length = len(stone_str)
+
+    # If the length of the stone is even, split the stone and calculate recursively for both halves
+    if stone_length % 2 == 0:
+        half_length = stone_length // 2
+        return sum(count_blinks(int(st), num_blinks - 1) for st in [stone_str[:half_length], stone_str[half_length:]])
+
+    # If the length is odd, multiply the stone by 2024 and continue the recursion
+    return count_blinks(stone * 2024 if stone else 1, num_blinks - 1)
+
+
+# Read the stones from the input file
+with open('D11 Input') as file:
+    stones = [int(num) for num in file.read().split()]
+
+# Calculate the total number of stones after 25 and 75 blinks for each stone
+total_stones_25 = sum(count_blinks(stone, 25) for stone in stones)
+print("Part 1 - Number of stones after blinking 25 times:", total_stones_25)
+
+total_stones_75 = sum(count_blinks(stone, 75) for stone in stones)
+print("Part 2 - Number of stones after blinking 75 times:", total_stones_75)
