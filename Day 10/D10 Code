@@ -1,0 +1,65 @@
+import numpy as np
+
+
+def get_neighbors(y, x, max_y, max_x):
+    # Given a coordinate (y, x) and grid dimensions (max_y, max_x),
+    # return the list of valid neighboring coordinates within bounds.
+    neighbors = [(y, x + 1), (y, x - 1), (y + 1, x), (y - 1, x)]
+    return [coord for coord in neighbors if 0 <= coord[0] < max_y and 0 <= coord[1] < max_x]
+
+
+def find_paths(grid):
+    # Given a grid, find all possible routes starting from cells with value 0.
+    # A route can move to neighboring cells if their value is exactly 1 greater than the current cell's value.
+    all_paths = []
+
+    # Iterate over all starting points (cells with value 0)
+    for start_point in zip(*np.where(grid == 0)):
+        current_points = [start_point]
+
+        # Explore neighbors up to a maximum of 9 steps
+        for _ in range(9):
+            next_points = []
+
+            for point in current_points:
+                # Get valid neighbors where the difference in values is 1
+                neighbors = get_neighbors(*point, *grid.shape)
+                valid_neighbors = [neighbor for neighbor in neighbors if grid[neighbor] - grid[point] == 1]
+                next_points.extend(valid_neighbors)
+
+            # If no valid neighbors are found, stop searching
+            if not next_points:
+                break
+
+            # Update current points to be the next valid points
+            current_points = next_points
+
+        # Add the found path to the list of all paths
+        all_paths.append(current_points)
+
+    return all_paths
+
+
+def calculate_path_score(paths):
+    # Calculate the score of all found paths by summing the number of unique points in each path.
+    return sum(len(set(path)) for path in paths)
+
+
+def calculate_path_rating(paths):
+    # Calculate the rating of all found paths by summing the length of each path.
+    return sum(len(path) for path in paths)
+
+
+# Read the map topography from the input file and create a grid
+with open('D10 Input', 'r') as file:
+    topography_grid = np.array([[int(num) for num in line.strip()] for line in file])
+
+# Find all paths based on the grid
+paths = find_paths(topography_grid)
+
+# Calculate and print the score and rating of the found paths
+path_score = calculate_path_score(paths)
+print("Part 1 - Sum of the scores of all trailheads:", path_score)
+
+path_rating = calculate_path_rating(paths)
+print("Part 2 - Sum of the ratings of all trailheads:", path_rating)
