@@ -58,6 +58,5 @@ for final, values in vals.items():
         second_sum += final
 
 
-
-print(first_sum)
-print(second_sum)
+print("Part 1 - Sum of valid equations with two operators:", first_sum)
+print("Part 2 - Sum of valid equations with three operators:", second_sum)
