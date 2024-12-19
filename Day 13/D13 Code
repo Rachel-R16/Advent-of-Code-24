@@ -1,0 +1,93 @@
+import re
+from sympy import symbols, Eq, solve
+
+# Read the input file and store the data
+with open('D13 Input', 'r') as file:
+    input_data = file.read()
+
+# Define regex patterns to extract button and prize information
+button_pattern = r"Button (A|B): X(\+?\d+), Y(\+?\d+)"
+prize_pattern = r"Prize: X=(\d+), Y=(\d+)"
+
+# Function to parse entries from the input data
+def parse_entries(input_data, scale_prize=0):
+    # Initialize a list to store parsed entries
+    entries = []
+    
+    # Use regex to match each block of data containing buttons and prizes
+    for match in re.finditer(r"(Button A:.*?Prize:.*?)(?=\n\n|\Z)", input_data, re.DOTALL):
+        # Extract details for Button A
+        button_a = re.search(button_pattern, match.group(1))
+        # Extract details for Button B
+        button_b = re.search(button_pattern, match.group(1)[button_a.end():])
+        # Extract details for the Prize
+        prize = re.search(prize_pattern, match.group(1))
+        
+        # Append the parsed information as a dictionary
+        entries.append({
+            'Button A': {'X': int(button_a.group(2)), 'Y': int(button_a.group(3))},
+            'Button B': {'X': int(button_b.group(2)), 'Y': int(button_b.group(3))},
+            'Prize': {'X': int(prize.group(1)) + scale_prize, 'Y': int(prize.group(2)) + scale_prize}
+        })
+    return entries
+
+# Parse the regular entries (without scaling) and scaled entries (add 10^13 to prize coordinates)
+regular_entries = parse_entries(input_data)
+scaled_entries = parse_entries(input_data, scale_prize=10**13)
+
+# Function to find the fewest tokens required using brute force for regular entries
+def find_regular_tokens(entries):
+    # Initialize a list to store button presses for each entry
+    button_presses = []
+    
+    # Iterate through each entry in the parsed data
+    for entry in entries:
+        # Iterate over all possible button press combinations (i, j)
+        for i in range(100):
+            for j in range(100):
+                # Check if the button presses satisfy both X and Y conditions for the prize
+                if entry['Prize']['X'] == (i * entry['Button A']['X']) + (j * entry['Button B']['X']) and \
+                   entry['Prize']['Y'] == (i * entry['Button A']['Y']) + (j * entry['Button B']['Y']):
+                    # Store the successful combination
+                    button_presses.append((i, j))
+    
+    # Calculate the total tokens required based on the button presses
+    total_tokens = 0
+    for presses in button_presses:
+        # Each press of Button A costs 3 tokens, and Button B costs 1 token
+        total_tokens += (3 * presses[0]) + presses[1]
+    
+    return total_tokens
+
+# Function to find the fewest tokens required using symbolic solving for scaled entries
+def find_scaled_tokens(entries):
+    # Initialize the total tokens counter
+    total_tokens = 0
+    
+    # Iterate through each entry in the parsed data
+    for entry in entries:
+        # Define symbolic variables for button presses
+        a, b = symbols('a b', integer=True)
+        
+        # Set up equations for the prize X and Y coordinates
+        eq_x = Eq((entry['Button A']['X'] * a) + (entry['Button B']['X'] * b), entry['Prize']['X'])
+        eq_y = Eq((entry['Button A']['Y'] * a) + (entry['Button B']['Y'] * b), entry['Prize']['Y'])
+        
+        # Solve the equations for integer solutions
+        solution = solve((eq_x, eq_y), (a, b))
+        
+        # If a valid solution is found, calculate the tokens for this entry
+        if solution:
+            button_a_presses, button_b_presses = solution[a], solution[b]
+            tokens = (3 * button_a_presses) + (1 * button_b_presses)
+            total_tokens += tokens  # Add the tokens to the total
+    
+    return total_tokens
+
+# Calculate tokens required for regular and scaled scenarios
+regular_tokens = find_regular_tokens(regular_entries)
+scaled_tokens = find_scaled_tokens(scaled_entries)
+
+# Print the results for Part 1 and Part 2
+print("Part 1 - Fewest tokens to win prizes:", regular_tokens)
+print("Part 2 - Fewest scaled tokens to win prizes:", scaled_tokens)
