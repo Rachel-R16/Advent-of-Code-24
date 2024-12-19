@@ -1,0 +1,74 @@
+from collections import defaultdict
+
+# Read the garden layout and map the plants to their respective coordinates
+with open('D12 Input', 'r') as file:
+    garden = defaultdict(set)
+    for y, line in enumerate(file.readlines()):
+        for x, ch in enumerate(line.strip()):
+            garden[ch].add(y + x * 1j)
+
+
+def create_individual_plots(garden):
+    # Create individual plots by grouping connected plants and calculating their fences.
+    # A plot is a connected set of plants, and the fences represent the boundaries between them.
+    total_plots = []
+
+    # Process each plant type (garden value) in the garden
+    for plants in garden.values():
+        while plants:
+            fences = []
+            current_plants = {plants.pop()}
+            region = current_plants
+
+            # Find all connected plants and their fences
+            while current_plants:
+                new_plants = set()
+                for plant in current_plants:
+                    neighbors = {plant + direction for direction in [-1, 1, -1j, 1j]}
+                    new_fences = neighbors - plants - region
+                    fences.extend((fence, fence - plant) for fence in new_fences)
+                    new_plants |= (neighbors - region - new_fences)
+
+                # Update the region with new connected plants
+                region |= new_plants
+                current_plants = new_plants
+
+            # Add the region and its fences to the list
+            total_plots.append((region, fences))
+            plants -= region
+
+    return total_plots
+
+
+def calculate_area_and_perimeters(plots):
+    # Calculate the total area and perimeter cost for all plots.
+    # The area is the size of the region, and the perimeter is the length of the fences.
+    return sum(len(region) * len(fences) for region, fences in plots)
+
+
+def calculate_area_and_sides(plots):
+    # Calculate the total cost based on the number of sides of the fences.
+    # A side exists if there is no opposite fence direction in the plot.
+    total_cost = 0
+
+    for region, fences in plots:
+        side_count = 0
+
+        for plant, direction in fences:
+            if (plant - direction * -1j, direction) not in fences:
+                side_count += 1
+
+        total_cost += side_count * len(region)
+
+    return total_cost
+
+
+# Create individual plots from the garden layout
+final_plots = create_individual_plots(garden)
+
+# Calculate and print the total cost for area and perimeter, and area and sides
+total_area_perimeter_cost = calculate_area_and_perimeters(final_plots)
+print("Part 1 - Cost with perimeter and area:", total_area_perimeter_cost)
+
+total_area_sides_cost = calculate_area_and_sides(final_plots)
+print("Part 2 - Cost with side and area:", total_area_sides_cost)
