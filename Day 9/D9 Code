@@ -1,0 +1,104 @@
+from itertools import count
+from copy import deepcopy
+
+# Function to calculate the sum of positions for tight packing of files
+def tight_pack(file_values):
+    # Initialize the total sum of positions
+    total_sum = 0
+    # Create a counter for positions, starting from 0
+    position_counter = count()
+
+    # Determine the last file index (half the length of file_values)
+    last_file_index = len(file_values) // 2
+    # Get the remaining length of files that need to be packed
+    remaining_length = file_values.pop()
+
+    # Loop through each block size in file_values
+    for index, block_size in enumerate(file_values):
+        # Loop through each block within a given block size
+        for _ in range(block_size):
+            # Get the current position from the counter
+            current_position = next(position_counter)
+            if index % 2 == 1:  # If the block is in an odd index
+                # If there are no remaining lengths to be packed
+                if remaining_length == 0:
+                    try:
+                        # Pop the last two values from file_values to get remaining length
+                        file_values.pop()
+                        remaining_length = file_values.pop()
+                        last_file_index -= 1
+                    except IndexError:
+                        break
+                # Add to the total sum with the current position and the last file index
+                total_sum += current_position * last_file_index
+                # Decrease the remaining length as one block is packed
+                remaining_length -= 1
+            else:  # If the block is in an even index
+                # Add to the total sum based on the current index (integer division by 2)
+                total_sum += current_position * (index // 2)
+
+    # After packing all the blocks, fill the remaining positions with the last file index
+    for _ in range(remaining_length):
+        total_sum += next(position_counter) * last_file_index
+
+    return total_sum
+
+
+# Function to calculate the sum of positions for loose packing of files
+def loose_pack(file_values):
+    # Initialize the total sum of positions
+    total_sum = 0
+    # Create a counter for positions, starting from 0
+    position_counter = count()
+    # Set to keep track of the indices that have already been used in packing
+    used_indices = set()
+
+    # Loop through each block size in file_values
+    for index, block_size in enumerate(file_values):
+        # If the current index is odd and hasn't been used
+        if index not in used_indices and index % 2 == 1:
+            # While there are still blocks to pack
+            while block_size > 0:
+                # Try to find a smaller block from the remaining blocks that fit
+                for reverse_index in range(len(file_values) - 1, index, -2):
+                    # If the reverse index hasn't been used and the block size is valid
+                    if reverse_index not in used_indices and file_values[reverse_index] <= block_size:
+                        # Select the block and file index to pack
+                        selected_block_size = file_values[reverse_index]
+                        selected_file_index = reverse_index // 2
+                        # Mark this reverse index as used
+                        used_indices.add(reverse_index)
+                        break
+                else:
+                    # If no reverse block is found, use the current block size
+                    selected_block_size = block_size
+                    selected_file_index = 0
+
+                # Pack the selected block by adding to the total sum
+                for _ in range(selected_block_size):
+                    current_position = next(position_counter)
+                    total_sum += current_position * selected_file_index
+                    # Decrease the block size as it's packed
+                    block_size -= 1
+        else:
+            # If the block index is even or already used, assign a default file index
+            selected_file_index = 0 if index in used_indices else index // 2
+            # Pack the block by adding to the total sum
+            for _ in range(block_size):
+                current_position = next(position_counter)
+                total_sum += current_position * selected_file_index
+
+    return total_sum
+
+
+# Reading the input file and converting it to a list of integers
+with open('D9 Input', 'r') as file:
+    file_block = [int(num) for num in file.read().strip()]
+
+# Calculate the total sum for tight packing using a deepcopy of the file block
+tight_file_pack = tight_pack(deepcopy(file_block))
+print("Part 1 - Sum of tight packing files: ", tight_file_pack)
+
+# Calculate the total sum for loose packing using the original file block
+loose_file_pack = loose_pack(file_block)
+print("Part 2 - Sum of loose packing files: ", loose_file_pack)
