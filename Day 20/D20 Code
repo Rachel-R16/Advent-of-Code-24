@@ -1,0 +1,101 @@
+import heapq
+from collections import defaultdict
+
+# Function to implement Dijkstra's algorithm to find shortest paths in the grid
+def dijkstra(grid, start):
+    # Define directions for movement (up, down, left, right)
+    directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+
+    rows, cols = len(grid), len(grid[0])  # Get the grid dimensions
+    visited = set()  # Set to keep track of visited cells
+    priority_queue = []  # Priority queue (min-heap) to explore cells based on shortest distance
+    heapq.heappush(priority_queue, (0, start[0], start[1]))  # Initialize with the start point
+
+    # Initialize a distance grid with infinity values, except for the start position
+    distances = [[float('inf')] * cols for _ in range(rows)]
+    distances[start[0]][start[1]] = 0
+
+    while priority_queue:
+        current_dist, r, c = heapq.heappop(priority_queue)  # Pop the cell with the smallest distance
+
+        # Skip the cell if it has already been visited
+        if (r, c) in visited:
+            continue
+        visited.add((r, c))  # Mark the current cell as visited
+
+        # Explore the neighbors in all 4 directions
+        for dr, dc in directions:
+            nr, nc = r + dr, c + dc  # Calculate new row and column
+
+            # Skip out-of-bound cells or already visited cells
+            if 0 <= nr < rows and 0 <= nc < cols and (nr, nc) not in visited:
+                if grid[nr][nc] == '#':  # Skip walls
+                    continue
+
+                new_dist = current_dist + 1  # Calculate new distance
+                # Update the distance if the new distance is smaller
+                if new_dist < distances[nr][nc]:
+                    distances[nr][nc] = new_dist
+                    heapq.heappush(priority_queue, (new_dist, nr, nc))  # Add to priority queue for further exploration
+
+    return distances  # Return the grid of shortest distances
+
+# Function to solve the maze and count significant savings in time
+def solve(grid, max_manhattan_dist, min_savings_threshold=100):
+    rows, cols = len(grid), len(grid[0])  # Get the grid dimensions
+
+    # Locate start and end points in the grid
+    start, end = None, None
+    for r in range(rows):
+        for c in range(cols):
+            if grid[r][c] == 'S':  # Start point
+                start = (r, c)
+            elif grid[r][c] == 'E':  # End point
+                end = (r, c)
+
+    if not start or not end:
+        raise ValueError("Grid must contain start ('S') and end ('E') points.")
+
+    # Calculate shortest distances from start and end points
+    dist_from_start = dijkstra(grid, start)
+    dist_from_end = [[-1 if cell == float('inf') else dist_from_start[end[0]][end[1]] - cell for cell in row] for row in dist_from_start]
+
+    # Calculate potential time savings for each non-wall cell
+    time_savings = defaultdict(int)  # Dictionary to store time savings for different cells
+    for r in range(rows):
+        for c in range(cols):
+            if grid[r][c] == '#':  # Skip walls
+                continue
+
+            # Check cells within the Manhattan distance range
+            for dr in range(-max_manhattan_dist, max_manhattan_dist + 1):
+                for dc in range(-max_manhattan_dist, max_manhattan_dist + 1):
+                    if abs(dr) + abs(dc) > max_manhattan_dist:  # Skip out-of-range cells
+                        continue
+
+                    nr, nc = r + dr, c + dc  # New cell to check within range
+                    if 0 <= nr < rows and 0 <= nc < cols and grid[nr][nc] != '#':  # Ensure it's within bounds and not a wall
+                        # Calculate new time via (r, c) and compare to normal time
+                        new_time = dist_from_start[r][c] + abs(dr) + abs(dc) + dist_from_end[nr][nc]
+                        normal_time = dist_from_start[end[0]][end[1]]  # Normal time from start to end
+
+                        if new_time < normal_time:  # If the new time is better
+                            savings = normal_time - new_time  # Calculate savings
+                            time_savings[savings] += 1  # Add the savings to the dictionary
+
+    # Count significant savings that meet the threshold
+    significant_savings_count = sum(
+        count for savings, count in time_savings.items() if savings >= min_savings_threshold
+    )
+
+    return significant_savings_count  # Return the count of significant savings
+
+# Read the maze from input file
+maze = []
+with open("D20 Input") as file:
+    for line in file:
+        maze.append(line.strip())
+
+# Print the results for both parts
+print("Part 1 - Num of cheats to save at least 100 picoseconds (dist 2):", solve(maze, 2))
+print("Part 2 - Num of cheats to save at least 100 picoseconds (dist 20):", solve(maze, 20))
