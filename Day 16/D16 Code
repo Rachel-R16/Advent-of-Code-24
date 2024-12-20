@@ -1,0 +1,105 @@
+import heapq
+
+
+def dijkstra(grid, start_states):
+    directions = {"E": (0, 1), "W": (0, -1), "N": (-1, 0), "S": (1, 0)}
+
+    distances = {}
+    priority_queue = []
+
+    # Initialize distances for all start states
+    for row, col, dir in start_states:
+        distances[(row, col, dir)] = 0
+        heapq.heappush(priority_queue, (0, row, col, dir))
+
+    while priority_queue:
+        current_dist, row, col, direction = heapq.heappop(priority_queue)
+
+        # Skip if we already found a shorter path to this state
+        if distances[(row, col, direction)] < current_dist:
+            continue
+
+        # Try changing direction
+        for next_direction in "EWNS".replace(direction, ""):
+            new_state = (row, col, next_direction)
+            new_dist = current_dist + 1000
+            if new_state not in distances or distances[new_state] > new_dist:
+                distances[new_state] = new_dist
+                heapq.heappush(priority_queue, (new_dist, row, col, next_direction))
+
+        # Move in the current direction
+        dr, dc = directions[direction]
+        next_row, next_col = row + dr, col + dc
+
+        if (
+                0 <= next_row < len(grid)
+                and 0 <= next_col < len(grid[0])
+                and grid[next_row][next_col] != "#"
+        ):
+            new_state = (next_row, next_col, direction)
+            new_dist = current_dist + 1
+            if new_state not in distances or distances[new_state] > new_dist:
+                distances[new_state] = new_dist
+                heapq.heappush(priority_queue, (new_dist, next_row, next_col, direction))
+
+    return distances
+
+
+def best_score(grid, start, end):
+    start_row, start_col = start
+    end_row, end_col = end
+
+    distances = dijkstra(grid, [(start_row, start_col, "E")])
+    min_distance = float('inf')
+
+    # Check the best distance for any ending direction
+    for direction in "EWNS":
+        if (end_row, end_col, direction) in distances:
+            min_distance = min(min_distance, distances[(end_row, end_col, direction)])
+
+    return min_distance
+
+
+def optimal_seats(grid, start, end):
+    start_row, start_col = start
+    end_row, end_col = end
+
+    from_start = dijkstra(grid, [(start_row, start_col, "E")])
+    from_end = dijkstra(grid, [(end_row, end_col, dir) for dir in "EWNS"])
+    optimal_distance = best_score(grid, start, end)
+
+    opposite_directions = {"E": "W", "W": "E", "N": "S", "S": "N"}
+    optimal_cells = set()
+
+    for row in range(len(grid)):
+        for col in range(len(grid[0])):
+            for direction in "EWNS":
+                state_from_start = (row, col, direction)
+                state_from_end = (row, col, opposite_directions[direction])
+
+                if (
+                        state_from_start in from_start
+                        and state_from_end in from_end
+                        and from_start[state_from_start] + from_end[state_from_end] == optimal_distance
+                ):
+                    optimal_cells.add((row, col))
+
+    return len(optimal_cells)
+
+
+maze = []
+with open("D16 Input") as file:
+    for line in file:
+        maze.append(list(line.strip()))
+
+for r, row in enumerate(maze):
+    for c, ch in enumerate(row):
+        if ch == "S":
+            start_pos = (r, c)
+        elif ch == "E":
+            end_pos = (r, c)
+
+score = best_score(maze, start_pos, end_pos)
+print("Part 1 - Lowest score a Reindeer can get:", score)
+seats = optimal_seats(maze, start_pos, end_pos)
+print("Part 2 - Tiles on at least one of the best paths:", seats)
