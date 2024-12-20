@@ -1,0 +1,68 @@
+from collections import deque
+
+# Function to corrupt a specific set of memory spaces
+def kilobyte_corrupted(memory_space, corrupted_space):
+    for i in range(1024):  # Loop over the corrupted spaces
+        y, x = corrupted_space[i]  # Get coordinates of the corrupted space
+        memory_space[x][y] = '#'  # Mark the space as corrupted with a '#'
+    return memory_space
+
+# Function to find the shortest path in the maze using BFS
+def shortest_path(maze, start, end):
+    rows, cols = len(maze), len(maze[0])  # Get dimensions of the maze
+    directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]  # Up, Down, Left, Right directions
+    visited = [[False for _ in range(cols)] for _ in range(rows)]  # Create a visited matrix
+    queue = deque([(start[0], start[1], 0)])  # Initialize queue with start position and steps
+
+    while queue:
+        x, y, steps = queue.popleft()  # Dequeue the next position
+
+        # If we reach the end point, return the number of steps taken
+        if (x, y) == end:
+            return steps
+
+        visited[x][y] = True  # Mark the current position as visited
+
+        # Explore neighbors in all directions
+        for dx, dy in directions:
+            nx, ny = x + dx, y + dy  # Calculate new position
+            # Check if the new position is within bounds, not visited, and open ('.')
+            if 0 <= nx < rows and 0 <= ny < cols and not visited[nx][ny] and maze[nx][ny] == '.':
+                queue.append((nx, ny, steps + 1))  # Add the new position to the queue with incremented steps
+                visited[nx][ny] = True  # Mark as visited when adding to queue
+
+    return -1  # Return -1 if no path is found
+
+# Function to simulate corrupting memory and find the first corrupted space that blocks the path
+def simulate_corrupting(memory_space, corrupted_space):
+    for coord in corrupted_space:
+        y, x = coord[0], coord[1]  # Extract coordinates from the corrupted space
+        memory_space[x][y] = '#'  # Mark the memory space as corrupted
+        # Check if the path from (0, 0) to (70, 70) is still possible after corruption
+        if shortest_path(memory_space, (0,0), (70,70)) == -1:
+            return coord  # Return the corrupted space that blocks the exit
+
+# Reading corrupted memory coordinates from input file
+corrupted_spaces = []
+with open('D18 Input', 'r') as file:
+    for line in file:
+        coords = line.strip().split(',')  # Split each line into coordinates
+        pos = (int(coords[0]), int(coords[1]))  # Convert coordinates to tuple of integers
+        corrupted_spaces.append(pos)  # Add the coordinates to the list
+
+# Initialize start and end coordinates
+start_coord = (0, 0)
+end_coord = (70, 70)
+
+# Initialize an empty memory space
+memory_spaces = [['.' for _ in range(71)] for _ in range(71)]
+
+# Corrupt the memory space and calculate steps to exit
+corrupted_memory = kilobyte_corrupted(memory_spaces, corrupted_spaces)
+result = shortest_path(corrupted_memory, start_coord, end_coord)  # Find the shortest path with corrupted memory
+print("Part 1 - Steps to exit after a kilobyte of corrupted spaces:", result)
+
+# Reset the memory space and simulate corrupting to find blocking coordinate
+memory_spaces = [['.' for _ in range(71)] for _ in range(71)]
+final_coord = simulate_corrupting(memory_spaces, corrupted_spaces)  # Find the first corrupted space that blocks the path
+print("Part 2 - Co-ord that closes exit:", final_coord)
