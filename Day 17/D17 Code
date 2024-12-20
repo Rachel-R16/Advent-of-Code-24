@@ -1,0 +1,111 @@
+lines = []
+with open('D17 Input', 'r') as file:
+    for line in file:
+        if line.strip() != '':
+            lines.append(line.strip())
+
+register_a = int(lines[0].split(' ')[2])
+register_b = int(lines[1].split(' ')[2])
+register_c = int(lines[2].split(' ')[2])
+program = []
+for x in list(lines[3].split(' ')[1]):
+    if x != ',':
+        program.append(int(x))
+
+
+def find_out_values(a, b, c):
+    reg_a, reg_b, reg_c = a, b, c
+    instruction_pointer = 2
+    idx = 0
+    final_vals = []
+
+
+    def get_combo_operand(operand):
+        if operand == 0:
+            return 0
+        elif operand == 1:
+            return 1
+        elif operand == 2:
+            return 2
+        elif operand == 3:
+            return 3
+        elif operand == 4:
+            return reg_a
+        elif operand == 5:
+            return reg_b
+        elif operand == 6:
+            return reg_c
+        return None
+
+
+    while True:
+        curr_opcode = program[idx]
+        curr_operand = program[idx + 1]
+        # 'adv' : Performs division. The numerator is the value in the A register.
+        # The denominator is found by raising 2 to the power of the instruction's combo operand. The result
+        # of the division operation is truncated to an integer and then written to the A register.
+        if curr_opcode == 0:
+            reg_a = int(reg_a / pow(2, get_combo_operand(curr_operand)))
+
+        # 'bxl' : Calculates the bitwise XOR of register B and the instruction's literal operand,
+        # then stores the result in register B.
+        elif curr_opcode == 1:
+            reg_b = int(reg_b ^ curr_operand)
+
+        # 'bst' : Calculates the value of its combo operand modulo 8 (thereby keeping only its lowest 3 bits),
+        # then writes that value to the B register.
+        elif curr_opcode == 2:
+            reg_b = int(get_combo_operand(curr_operand) % 8)
+
+        # 'jnz' : Does nothing if the A register is 0. However, if the A register is not zero,
+        # it jumps by setting the instruction pointer to the value of its literal operand;
+        # if this instruction jumps, the instruction pointer is not increased by 2 after this instruction.
+
+        elif curr_opcode == 3:
+            if reg_a != 0:
+                idx = curr_operand
+                continue
+
+        # 'bxc' : Calculates the bitwise XOR of register B and register C, then stores the result in register B.
+        # (For legacy reasons, this instruction reads an operand but ignores it.)
+        elif curr_opcode == 4:
+            reg_b = int(reg_b ^ reg_c)
+
+        # 'out' : Calculates the value of its combo operand modulo 8, then outputs that value.
+        # (If a program outputs multiple values, they are separated by commas.)
+        elif curr_opcode == 5:
+            final_vals.append(get_combo_operand(curr_operand) % 8)
+
+        # 'bdv' : Works exactly like the adv instruction except that the result is stored in the B register.
+        # (The numerator is still read from the A register.)
+        elif curr_opcode == 6:
+            reg_b = int(reg_a / pow(2, get_combo_operand(curr_operand)))
+
+        # 'cdv' : Works exactly like the adv instruction except that the result is stored in the C register.
+        # (The numerator is still read from the A register.)
+        elif curr_opcode == 7:
+            reg_c = int(reg_a / pow(2, get_combo_operand(curr_operand)))
+
+        idx += instruction_pointer
+        if idx >= len(program):
+            break
+
+    return final_vals
+
+
+out_values = find_out_values(register_a, register_b, register_c)
+print("Part 1 - Output values:", ",".join(str(x) for x in out_values))
+
+
+vals = [0]
+for len_value in range(1, len(program) + 1):
+    prev_vals = vals
+    vals = []
+    for x in prev_vals:
+        for offset in range(8):
+            new_val = (8 * x) + offset
+            if find_out_values(new_val, register_b, register_c) == program[-len_value:]:
+                vals.append(new_val)
+
+fixed_reg_a = min(vals)
+print("Part 2 - Optimal value for register A:", fixed_reg_a)
