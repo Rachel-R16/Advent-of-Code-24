@@ -1,0 +1,46 @@
+from functools import cache
+
+# Initialize lists for towel patterns and desired designs
+towel_patterns = []
+desired_designs = []
+split = ''  # Flag to separate towel patterns from desired designs
+
+# Read input data from file
+with open('D19 Input', 'r') as file:
+    for line in file:
+        if line == '\n':  # Empty line indicates separation of towel patterns and desired designs
+            split = True
+            continue
+        if not split:  # Collect towel patterns before the split
+            for towel in line.strip().split(", "):  # Split the line into individual towel patterns
+                towel_patterns.append(towel)
+        else:  # Collect desired designs after the split
+            desired_designs.append(line.strip())
+
+# Define a recursive function with caching to check the design possibilities
+@cache  # Cache results to optimize performance by avoiding redundant calculations
+def check_design(designs):
+    global towel_patterns
+    if not designs:  # Base case: if the design is empty, return 1
+        return 1
+    total = 0
+    for pattern in towel_patterns:  # Try each towel pattern to see if it matches the beginning of the design
+        if designs.startswith(pattern):  # If the design starts with the current pattern
+            total += check_design(designs.removeprefix(pattern))  # Recursively check the remaining part of the design
+    return total
+
+# Function to calculate the number of possible patterns that can form the desired designs
+def possible_patterns(designs):
+    return sum(check_design(design) > 0 for design in designs)  # Count how many designs have at least one valid pattern
+
+# Function to calculate the sum of all possible pattern possibilities for the given designs
+def pattern_possibilities(designs):
+    return sum(check_design(design) for design in designs)  # Sum the number of valid patterns for each design
+
+# Calculate and print the total number of possible patterns from the given towel patterns
+possible_patterns_count = possible_patterns(desired_designs)
+print("Part 1 - Total possible patterns from the given towels are:", possible_patterns_count)
+
+# Calculate and print the sum of different pattern possibilities
+pattern_possibilities_count = pattern_possibilities(desired_designs)
+print("Part 2 - Sum of different pattern possibilities:", pattern_possibilities_count)
