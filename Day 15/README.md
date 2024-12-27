@@ -43,10 +43,14 @@ The output consists of two parts:
 3. **GPS Calculation**: After the robot finishes moving, the coordinates of the boxes are used to calculate the sum of their GPS values.
 
 ### Part 1 Output:
-For the original warehouse, the sum of GPS coordinates is `1406392`.
+```
+Part 1 - Find GPS of boxes in room: 1406392
+```
 
 ### Part 2 Output:
-For the enlarged warehouse, the sum of GPS coordinates is `1429013`.
+```
+Part 2 - Find GPS of boxes in enlarged room: 1429013
+```
 
 ## Conclusion
 
