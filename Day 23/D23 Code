@@ -1,0 +1,73 @@
+# Initialize variables to store connections and computers
+connection_dict = {}  # Dictionary to map each computer to its connected computers
+computers, connections = set(), set()  # Sets to store all unique computers and connections
+
+# Read the input file line by line
+with open("D23 Input") as file:
+    for line in file:
+        computer = line.strip().split("-")  # Split the connection into two computers
+
+        # Update the connection dictionary for the first computer
+        if computer[0] not in connection_dict.keys():
+            connection_dict[computer[0]] = [computer[1]]
+        else:
+            connection_dict[computer[0]].append(computer[1])
+
+        # Update the connection dictionary for the second computer
+        if computer[1] not in connection_dict.keys():
+            connection_dict[computer[1]] = [computer[0]]
+        else:
+            connection_dict[computer[1]].append(computer[0])
+
+        # Add both computers to the set of computers
+        computers.update([computer[0], computer[1]])
+
+        # Add both directions of the connection to the set of connections
+        connections.update([(computer[0], computer[1]), (computer[1], computer[0])])
+
+
+# Function to find all three-way connections with at least one computer starting with 't'
+def find_three_way_connection(conn_dict):
+    three_set = []  # List to store unique three-way connections
+    for first_comp, conn_list in conn_dict.items():  # Iterate over each computer and its connections
+        for second_comp in conn_list:
+            for third_comp in conn_list:
+                # Check if the third computer is connected to the second
+                if third_comp in conn_dict.get(second_comp):
+                    # Ensure at least one computer in the connection starts with 't'
+                    if first_comp.startswith('t') or second_comp.startswith('t') or third_comp.startswith('t'):
+                        three_way_conn = (first_comp, second_comp, third_comp)
+                        # Normalize the tuple to avoid duplicate connections
+                        normalized_tuple = tuple(sorted(three_way_conn))
+                        if normalized_tuple not in three_set:
+                            three_set.append(normalized_tuple)
+    return three_set
+
+
+# Function to find the largest network of fully connected computers
+def find_largest_network(comps, conns):
+    # Start with each computer as its own network
+    networks = [{c} for c in computers]
+
+    # Iterate over each network and expand it with connected computers
+    for network in networks:
+        for comp in comps:
+            # Check if the computer is connected to all devices in the current network
+            if all((comp, device) in conns for device in network):
+                network.add(comp)  # Add the computer to the network
+
+    # Find the largest network by size
+    largest_network = max(networks, key=len)
+
+    # Return the computers in the largest network, sorted alphabetically
+    return ",".join(sorted(largest_network))
+
+
+# Find all three-way connections and count them
+all_three_connections = find_three_way_connection(connection_dict)
+
+# Print the result for Part 1
+print("Part 1 - Number of three way connections with at least one 't' computer:", len(all_three_connections))
+
+# Find the password for the LAN party, which is the largest fully connected network
+print("Part 2 - Password to LAN party:", find_largest_network(computers, connections))
