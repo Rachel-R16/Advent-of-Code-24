@@ -1,7 +1,3 @@
-Here is the README formatted according to your specifications:
-
----
-
 # Day 13: Claw Contraption
 
 ## Problem Description
