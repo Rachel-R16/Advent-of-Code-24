@@ -1,0 +1,99 @@
+# Initialize variables
+split = False  # To track whether the blank line separating sections has been encountered
+input_dict = {}  # Dictionary to store initial values from the input
+operations = []  # List to store operation instructions
+highest_z = "z00"  # Track the highest 'z' variable based on numerical suffix
+
+# Read the input file line by line
+with open('D24 Input') as file:
+    for line in file:
+        if line == '\n':  # Detect the blank line separating sections
+            split = True
+            continue
+
+        if not split:  # Before the blank line: Parse initial variable definitions
+            num_id, num_val = line.strip().split(': ')
+            input_dict.update({num_id: int(num_val)})  # Store as key-value pairs in input_dict
+        else:  # After the blank line: Parse operation instructions
+            instruction = line.strip().split(' ')
+            op_1, operator, op_2, _, result = instruction  # Extract operation components
+            operations.append((op_1, operator, op_2, result))  # Append the operation as a tuple
+
+            # Update highest 'z' if the current result variable is a 'z' and has a higher numerical suffix
+            if result.startswith('z') and int(result[1:]) > int(highest_z[1:]):
+                highest_z = result
+
+            # Update input_dict to include instructions as lists
+            input_dict.update({instruction[4]: [instruction[0], instruction[1], instruction[2]]})
+
+
+# Define a helper function to process operations
+def process(op, op1, op2):
+    if op == "AND":  # Perform bitwise AND
+        return op1 & op2
+    elif op == "OR":  # Perform bitwise OR
+        return op1 | op2
+    elif op == "XOR":  # Perform bitwise XOR
+        return op1 ^ op2
+
+
+# Function to resolve values in the input dictionary
+def process_dict_values(data):
+    # Continue processing until all values in the dictionary are resolved
+    while any(isinstance(value, list) for value in data.values()):
+        for key, value in data.items():
+            if isinstance(value, list):  # Check if the value is a list (unresolved instruction)
+                if isinstance(data.get(value[0]), int) and isinstance(data.get(value[2]), int):
+                    # Resolve the operation if both operands are integers
+                    result = process(value[1], data.get(value[0]), data.get(value[2]))
+                    data[key] = result  # Replace the instruction with the computed result
+    return data
+
+
+# Function to identify incorrectly configured operations
+def find_wrong_operations(instructions):
+    wrong = set()  # Set to store registers involved in wrong operations
+    for op1, op, op2, res in instructions:
+        if res[0] == "z" and op != "XOR" and res != highest_z:  # Non-XOR on 'z' variables (except the highest)
+            wrong.add(res)
+        if (
+            op == "XOR"
+            and res[0] not in ["x", "y", "z"]  # Result not in specific prefixes
+            and op1[0] not in ["x", "y", "z"]
+            and op2[0] not in ["x", "y", "z"]
+        ):
+            wrong.add(res)
+        if op == "AND" and "x00" not in [op1, op2]:  # 'x00' not used in AND operations
+            for subop1, subop, subop2, subres in instructions:
+                if (res == subop1 or res == subop2) and subop != "OR":  # Follow-up operation check
+                    wrong.add(res)
+        if op == "XOR":  # XOR followed by an OR involving the result
+            for subop1, subop, subop2, subres in instructions:
+                if (res == subop1 or res == subop2) and subop == "OR":
+                    wrong.add(res)
+    return wrong
+
+
+# Process the input dictionary to resolve values
+processed_dict = process_dict_values(input_dict)
+
+# Extract all resolved 'z' variables into a separate dictionary
+z_dict = {key: value for key, value in processed_dict.items() if key.startswith('z')}
+
+# Convert the 'z' values to a binary representation
+binary_representation = ''.join(str(z_dict[f'z{str(i).zfill(2)}']) for i in range(len(z_dict)))
+
+# Reverse the binary string and convert it to a decimal number
+decimal_value = int(binary_representation[::-1], 2)
+
+# Output Part 1 result
+print("Part 1 - Decimal number output on z:", decimal_value)
+
+# Find incorrect operations based on the instructions
+wrong_registers = find_wrong_operations(operations)
+
+# Format the wrong registers as a sorted, comma-separated string
+wrong_reg_str = ",".join(sorted(wrong_registers))
+
+# Output Part 2 result
+print("Part 2 - Sorted eight wires involved in a swap:", wrong_reg_str)
