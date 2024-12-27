@@ -1,0 +1,70 @@
+# Initialize lists to store schematics and the current schematic
+schematics = []
+curr = []
+
+# Read the input file line by line
+with open('D25 Input') as file:
+    for line in file:
+        # Check for a blank line indicating the end of a schematic
+        if line == '\n':
+            schematics.append(curr)  # Append the current schematic to schematics list
+            curr = []  # Reset the current schematic
+            continue
+        else:
+            # Add the line (as a list of characters) to the current schematic
+            curr.append(list(line.strip()))
+
+# Separate schematics into keys and locks based on specific criteria
+keys_grids = []
+locks_grids = []
+check_line = ['#', '#', '#', '#', '#']  # Line pattern to identify locks or keys
+
+for schema in schematics:
+    top, bottom = schema[0], schema[-1]  # Get the top and bottom rows of the schematic
+    if top == check_line:  # If the top row matches the check_line, it's a lock
+        locks_grids.append(schema)
+    if bottom == check_line:  # If the bottom row matches the check_line, it's a key
+        keys_grids.append(schema)
+
+# Function to calculate the heights of pins in the grid
+def find_schema_length(grid, key_bool):
+    if key_bool:  # For keys, remove the last row
+        grid.pop(-1)
+    else:  # For locks, remove the first row
+        grid.pop(0)
+
+    # Initialize counters for each pin column
+    a, b, c, d, e = 0, 0, 0, 0, 0
+    for row in grid:
+        # Count the '#' characters in each column
+        if row[0] == '#': a += 1
+        if row[1] == '#': b += 1
+        if row[2] == '#': c += 1
+        if row[3] == '#': d += 1
+        if row[4] == '#': e += 1
+
+    # Return the pin heights as a tuple
+    pin_heights = (a, b, c, d, e)
+    return pin_heights
+
+# Compute heights for all keys and locks
+lock_heights = []
+key_heights = []
+
+for key in keys_grids:
+    key_heights.append(find_schema_length(key, True))  # Compute key heights
+for lock in locks_grids:
+    lock_heights.append(find_schema_length(lock, False))  # Compute lock heights
+
+# Count unique lock/key pairs that fit without overlapping
+fit = 0
+for lock in lock_heights:
+    for key in key_heights:
+        # Check if the combined heights in all columns do not exceed 5
+        if lock[0] + key[0] <= 5 and lock[1] + key[1] <= 5 and \
+           lock[2] + key[2] <= 5 and lock[3] + key[3] <= 5 and \
+           lock[4] + key[4] <= 5:
+            fit += 1
+
+# Print the result
+print("Part 1 - Unique lock/key pairs without overlapping:", fit)
