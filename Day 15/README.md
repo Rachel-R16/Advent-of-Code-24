@@ -54,4 +54,4 @@ Part 2 - Find GPS of boxes in enlarged room: 1429013
 
 ## Conclusion
 
-The puzzle tests your ability to simulate robot movements in a grid and calculate values based on positions. It also introduces the concept of enlarging the grid and adjusting movement logic accordingly.
+The puzzle tests your ability to simulate robot movements in a grid and calculate values based on positions. It also introduces the concept of enlarging the grid and adjusting movement logic.
