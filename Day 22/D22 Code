@@ -1,0 +1,115 @@
+import math
+
+# Initialize an empty list to store numbers from the input file
+number_list = []
+with open('D22 Input', 'r') as file:
+    for line in file:
+        # Convert each line to an integer and add to the list
+        number_list.append(int(line.strip()))
+
+
+# Function to "mix" a given value with a secret number using XOR
+def mix_value(secret_number, given_value):
+    return given_value ^ secret_number
+
+
+# Function to prune the value by taking its modulus with 16777216
+def prune_value(secret_number):
+    return secret_number % 16777216
+
+
+# Function to compute the evolution of a secret number over a series of steps
+def evolution(secret_number, steps, include_initial=True):
+    # Initialize a list to store evolution values, optionally including the initial number
+    evol_vals = [secret_number] if include_initial else []
+
+    for i in range(steps if include_initial else steps - 1):
+        # Apply the evolution rules step by step
+        secret_number = prune_value(mix_value(secret_number, secret_number * 64))
+        secret_number = prune_value(mix_value(secret_number, math.floor(secret_number / 32)))
+        secret_number = prune_value(mix_value(secret_number, secret_number * 2048))
+        evol_vals.append(secret_number)
+
+    return secret_number, evol_vals  # Return the final secret number and all evolution values
+
+
+# Function to calculate differences in evolution values
+def find_differences(evolution):
+    iterdict = {}
+    prices_list = []
+
+    for num in evolution:
+        # Extract the ones digit of the number
+        ones_digit = int(list(str(num))[-1])
+        prices_list.append(ones_digit)
+
+    # Compute differences between consecutive elements
+    for i in range(len(prices_list) - 4):
+        a, b, c, d = (prices_list[i+1] - prices_list[i],
+                      prices_list[i+2] - prices_list[i+1],
+                      prices_list[i+3] - prices_list[i+2],
+                      prices_list[i+4] - prices_list[i+3])
+
+        # Add the differences as keys in the dictionary with the corresponding value
+        if (a, b, c, d) not in iterdict.items():
+            iterdict[(a, b, c, d)] = prices_list[i+4]
+
+    return prices_list, iterdict
+
+
+# Function to find the "bananas" associated with a specific pattern in prices
+def find_bananas(pattern, prices):
+    for i in range(len(prices) - 4):
+        # Match the pattern in the prices list
+        if (prices[i+1] - prices[i], prices[i+2] - prices[i+1],
+            prices[i+3] - prices[i+2], prices[i+4] - prices[i+3]) == pattern:
+            return prices[i+4]  # Return the corresponding value if the pattern matches
+    return 0
+
+
+# Function to process all evolutions for a list of numbers
+def process_evolutions(num_list, step_limit):
+    fin_sum = 0  # Initialize the sum of final secret numbers
+    fin_dict = {}  # Initialize the dictionary to store patterns and values
+
+    for number in num_list:
+        # Compute the evolution including initial step
+        curr_secret, evolution_values = evolution(number, step_limit, True)
+        fin_sum += curr_secret  # Add the final secret number to the sum
+
+        # Compute the evolution excluding the initial step
+        _, evolution_values = evolution(number, step_limit, False)
+        prices, ev_dict = find_differences(evolution_values)
+
+        # Update the final dictionary with patterns and their cumulative values
+        for pattern, curr_value in ev_dict.items():
+            fin_dict[pattern] = fin_dict.get(pattern, 0) + curr_value
+
+    return fin_sum, fin_dict
+
+
+# Function to calculate the highest "bananas" possible based on patterns
+def calculate_highest_bananas(num_list, fin_dict):
+    banana_count = 0
+    max_val = max(fin_dict.values(), default=0)  # Find the maximum value in the dictionary
+
+    for number in num_list:
+        # Compute the evolution including initial step
+        curr_secret, evolution_values = evolution(number, 2000, True)
+        prices, _ = find_differences(evolution_values)
+
+        # Check patterns in the dictionary with the maximum value
+        for key, value in fin_dict.items():
+            if value == max_val:
+                banana_count += find_bananas(key, prices)
+
+    return banana_count
+
+
+# Process evolutions for all numbers and calculate the sum of 2000th secret numbers
+sum_of_vals, final_dict = process_evolutions(number_list, 2000)
+print("Part 1 - Sum of the 2000th secret number for each buyer:", sum_of_vals)
+
+# Calculate the highest possible number of bananas
+highest_banana_count = calculate_highest_bananas(number_list, final_dict)
+print("Part 2 - Highest number of bananas possible:", highest_banana_count)
