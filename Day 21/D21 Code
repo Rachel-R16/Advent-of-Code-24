@@ -1,0 +1,76 @@
+from collections import Counter
+
+# Read the input codes from a file, splitting into a list of strings
+codes = open("D21 Input").read().split("\n")
+
+# Mapping for keypad characters with their positions
+num_pad = {c: (i % 3, i // 3) for i, c in enumerate("789456123 0A")}
+# Mapping for directional characters with their positions
+dir_pad = {c: (i % 3, i // 3) for i, c in enumerate(" ^A<v>")}
+
+
+# Calculate the transitions (steps) between keys based on given directions.
+def count_steps(keypad, directions, increment=1):
+    # Initialize starting position at "A"
+    current_x, current_y = keypad["A"]
+
+    # Get the boundary position for the space character " "
+    space_x, space_y = keypad[" "]
+
+    # Counter to track the number of transitions between keys
+    transitions = Counter()
+
+    # Process each character in the directional string
+    for direction in directions:
+        # Get the position for the current character
+        next_x, next_y = keypad[direction]
+
+        # Check if the step crosses a boundary
+        is_boundary = (next_x == space_x and current_y == space_y) or (next_y == space_y and current_x == space_x)
+
+        # Record the transition in the Counter
+        transitions[(next_x - current_x, next_y - current_y, is_boundary)] += increment
+
+        # Update the current position to the new position
+        current_x, current_y = next_x, next_y
+
+    return transitions
+
+
+# Calculate the sum of complexities of the codes based on the number of directional pads.
+def find_code(num_dir_pads):
+    r = 0  # Initialize the result sum
+
+    # Process each code in the input list
+    for code in codes:
+        # Calculate initial transitions for the numeric keypad
+        res = count_steps(num_pad, code)
+
+        # Repeat the process for the specified number of directional pads
+        for _ in range(num_dir_pads + 1):
+            # Initialize an empty Counter to accumulate results
+            final_result = Counter()
+
+            # Process each transition in the current results
+            for x, y, f in res:
+                # Generate the directional string based on the transition
+                direction_string = (
+                    ("<" * -x + "v" * y + "^" * -y + ">" * x)[:: -1 if f else 1] + "A"
+                )
+                # Calculate transitions on the directional keypad
+                result = count_steps(dir_pad, direction_string, res[(x, y, f)])
+                # Update the cumulative results
+                final_result.update(result)
+
+            # Assign the updated results to `res`
+            res = final_result
+
+        # Add the product of total transitions and the numeric value of the first three characters of the code
+        r += res.total() * int(code[:3])
+
+    return r
+
+
+# Output results for the two parts of the problem
+print("Part 1 - Sum of the complexities of the five codes (2 direction pads):", find_code(2))
+print("Part 2 - Sum of the complexities of the five codes (25 direction pads):", find_code(25))
